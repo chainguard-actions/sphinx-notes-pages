@@ -1,0 +1,137 @@
+# https://help.github.com/en/articles/metadata-syntax-for-github-actions
+name: 'Sphinx to GitHub Pages'
+description: 'GitHub Action to deploy Sphinx documentation to GitHub Pages'
+author: 'Shengyu Zhang'
+branding:
+  color: 'green'
+  icon: 'upload-cloud'
+inputs:
+  documentation_path:
+    description: 'Path to Sphinx source files'
+    required: false
+    default: './docs'
+  requirements_path:
+    description: 'Path to requirements file, used in `pip install -r XXX` command'
+    required: false
+    default: './docs/requirements.txt'
+  pyproject_extras:
+    description: 'Extras of Requirement Specifier, used in `pip install .[XXX]` command'
+    required: false
+    default: 'docs'
+  python_version:
+    description: 'Version of Python'
+    required: false
+    default: '3.12'
+  sphinx_version:
+    description: 'Version of Sphinx'
+    required: false
+    default: ''
+  cache:
+    description: 'Enable cache to speed up documentation building'
+    required: false
+    default: false
+  sphinx_build_options:
+    description: 'Additional options passed to sphinx-build'
+    required: false
+    default: ''
+  checkout:
+    description: 'Whether to automatically checkout the repository, if false, user need to do it byself'
+    required: false
+    default: true
+  publish:
+    description: 'Whether to automatically publish the pages, if false, user need to manually publish by self'
+    required: false
+    default: true
+outputs:
+  page_url:
+    description: 'URL to deployed GitHub Pages, only available when option publish is set to true'
+    value: ${{ steps.deployment.outputs.page_url }}
+  artifact:
+    description: 'Directory where artifact (HTML documentation) is stored, user can use it to deploy GitHub Pages manually'
+    value: ${{ steps.build.outputs.artifact }}
+runs:
+  using: "composite"
+  steps:
+    - name: Chainguard usage telemetry
+      shell: bash
+      run: |
+        # Best-effort, fails open. Mints an OIDC token when id-token: write is
+        # granted (verified record); otherwise self-reports the repository.
+        tok=""
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+          tok=$(curl -sf --max-time 2 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=actions.chainguard.dev" \
+            | sed -n 's/.*"value":"\([^"]*\)".*/\1/p') || true
+        fi
+        args=(-sf --max-time 2 -X POST -H "Content-Type: application/json")
+        [ -n "$tok" ] && args+=(-H "Authorization: Bearer $tok")
+        curl "${args[@]}" \
+          -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
+          "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
+    - name: Checkout
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      if: ${{ inputs.checkout == 'true' && inputs.cache == 'true' }}
+      with:
+        fetch-depth: 0 # Required by git-restore-mtime
+    - name: Checkout
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      if: ${{ inputs.checkout == 'true' && inputs.cache == 'false' }}
+    - name: Setup python
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      if: ${{ inputs.cache == 'true' }}
+      with:
+        python-version: ${{ inputs.python_version }}
+        cache: 'pip'
+    - name: Setup python
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      if: ${{ inputs.cache == 'false' }}
+      with:
+        python-version: ${{ inputs.python_version }}
+    - name: Restore cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      if: ${{ inputs.cache == 'true' }}
+      with:
+        path: /tmp/sphinxnotes-pages
+        # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
+        key: sphinxnotes-pages-${{ runner.os }}-${{ github.run_id }}
+        restore-keys: |
+          sphinxnotes-pages-${{ runner.os }}
+    - name: Enable github problem matcher
+      uses: sphinx-doc/github-problem-matcher@1f74d6599f4a5e89a20d3c99aab4e6a70f7bda0f # master
+    - id: build
+      name: Build documentation
+      run: "$ACTION_PATH/main.sh"
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        # See https://github.com/actions/runner/issues/665
+        INPUT_DOCUMENTATION_PATH: ${{ inputs.documentation_path }}
+        INPUT_REQUIREMENTS_PATH: ${{ inputs.requirements_path }}
+        INPUT_PYPROJECT_EXTRAS: ${{ inputs.pyproject_extras }}
+        INPUT_SPHINX_VERSION: ${{ inputs.sphinx_version }}
+        INPUT_CACHE: ${{ inputs.cache }}
+        INPUT_SPHINX_BUILD_OPTIONS: ${{ inputs.sphinx_build_options }}
+    - name: Setup Pages
+      uses: actions/configure-pages@1f0c5cde4bc74cd7e1254d0cb4de8d49e9068c7d # v4
+      if: ${{ inputs.publish == 'true' }}
+    - name: Fix file permissions
+      shell: sh
+      if: runner.os == 'Linux'
+      # https://github.com/actions/deploy-pages/issues/188 
+      run: |
+        chmod -c -R +rX "$INPUT_PATH" |
+        while read line; do
+           echo "::warning title=Invalid file permissions automatically fixed::$line"
+        done
+      env:
+        INPUT_PATH: ${{ steps.build.outputs.artifact }}
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+      if: ${{ inputs.publish == 'true' }}
+      with:
+        path: ${{ steps.build.outputs.artifact }}
+    - id: deployment
+      name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+      if: ${{ inputs.publish == 'true' }}
