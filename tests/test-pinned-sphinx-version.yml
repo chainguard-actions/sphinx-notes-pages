@@ -1,4 +1,4 @@
-name: Test Sphinx build with extra sphinx-build options
+name: Test Sphinx build with pinned Sphinx version
 on:
   workflow_dispatch:
 jobs:
@@ -8,13 +8,13 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - id: action
-        name: Run sphinx-notes/pages action with extra build options
+        name: Run sphinx-notes/pages action with pinned sphinx version
         uses: .
         with:
           documentation_path: ./tests/fixtures/docs
           requirements_path: ./tests/fixtures/docs/requirements.txt
           pyproject_extras: ''
-          sphinx_build_options: '-v'
+          sphinx_version: '7.4.7'
           checkout: 'false'
           publish: 'false'
 
@@ -44,3 +44,14 @@ jobs:
             exit 1
           fi
           echo "PASS: artifact directory exists and contains index.html"
+
+      - name: Assert correct Sphinx version is installed
+        run: |
+          INSTALLED=$(sphinx-build --version 2>&1 || python3 -m sphinx --version 2>&1 || true)
+          echo "Installed Sphinx: $INSTALLED"
+          if echo "$INSTALLED" | grep -q "7.4.7"; then
+            echo "PASS: Sphinx 7.4.7 is installed"
+          else
+            echo "FAIL: Expected Sphinx 7.4.7 but got: $INSTALLED"
+            exit 1
+          fi

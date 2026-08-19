@@ -70,26 +70,26 @@ runs:
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     - name: Checkout
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'true' }}
       with:
         fetch-depth: 0 # Required by sphinxnotes-incrbuild
     - name: Checkout
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'false' }}
     - name: Setup python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
       if: ${{ inputs.cache == 'true' }}
       with:
         python-version: ${{ inputs.python_version }}
         cache: 'pip'
     - name: Setup python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
       if: ${{ inputs.cache == 'false' }}
       with:
         python-version: ${{ inputs.python_version }}
     - name: Restore cache
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
       if: ${{ inputs.cache == 'true' }}
       with:
         path: /tmp/sphinxnotes-incrbuild
@@ -101,9 +101,10 @@ runs:
       uses: sphinx-doc/github-problem-matcher@1f74d6599f4a5e89a20d3c99aab4e6a70f7bda0f # master
     - id: build
       name: Build documentation
-      run: $GITHUB_ACTION_PATH/main.sh
+      run: "$ACTION_PATH/main.sh"
       shell: bash
       env:
+        ACTION_PATH: ${{ github.action_path }}
         # See https://github.com/actions/runner/issues/665
         INPUT_DOCUMENTATION_PATH: ${{ inputs.documentation_path }}
         INPUT_REQUIREMENTS_PATH: ${{ inputs.requirements_path }}

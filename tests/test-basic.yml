@@ -1,4 +1,4 @@
-name: Test Sphinx build with extra sphinx-build options
+name: Test basic Sphinx build (no publish)
 on:
   workflow_dispatch:
 jobs:
@@ -8,13 +8,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - id: action
-        name: Run sphinx-notes/pages action with extra build options
+        name: Run sphinx-notes/pages action
         uses: .
         with:
           documentation_path: ./tests/fixtures/docs
           requirements_path: ./tests/fixtures/docs/requirements.txt
           pyproject_extras: ''
-          sphinx_build_options: '-v'
           checkout: 'false'
           publish: 'false'
 
