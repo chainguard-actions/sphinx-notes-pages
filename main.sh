@@ -5,8 +5,8 @@ set -e
 
 echo ::group:: Initialize various paths
 
-repo_dir=$GITHUB_WORKSPACE/$INPUT_REPOSITORY_PATH
-doc_dir=$repo_dir/$INPUT_DOCUMENTATION_PATH
+repo_dir="$GITHUB_WORKSPACE/$INPUT_REPOSITORY_PATH"
+doc_dir="$repo_dir/$INPUT_DOCUMENTATION_PATH"
 # https://stackoverflow.com/a/4774063/4799273
 action_dir=$GITHUB_ACTION_PATH
 
@@ -40,19 +40,19 @@ fi
 echo ::endgroup::
 
 if [ ! -z "$INPUT_REQUIREMENTS_PATH" ] ; then
-    echo ::group:: Installing dependencies declared by $INPUT_REQUIREMENTS_PATH
+    echo "::group:: Installing dependencies declared by $INPUT_REQUIREMENTS_PATH"
     if [ -f "$INPUT_REQUIREMENTS_PATH" ]; then
         pip3 install -r "$INPUT_REQUIREMENTS_PATH"
     else
-        echo No $INPUT_REQUIREMENTS_PATH found, skipped
+        echo "No $INPUT_REQUIREMENTS_PATH found, skipped"
     fi
     echo ::endgroup::
 fi
 
 if [ ! -z "$INPUT_PYPROJECT_EXTRAS" ] ; then
-    echo ::group:: Installing dependencies declared by pyproject.toml[$INPUT_PYPROJECT_EXTRAS]
+    echo "::group:: Installing dependencies declared by pyproject.toml[$INPUT_PYPROJECT_EXTRAS]"
     if [ -f "pyproject.toml" ]; then
-        pip3 install ".[$INPUT_PYPROJECT_EXTRAS]"
+        pip3 install ".[${INPUT_PYPROJECT_EXTRAS}]"
     else
         echo No pyproject.toml found, skipped
     fi
@@ -79,7 +79,7 @@ done
 
 echo Restoring timestamp of git repository
 git_restore_mtime=$action_dir/git-restore-mtime
-$git_restore_mtime $repo_dir
+"$git_restore_mtime" "$repo_dir"
 
 echo ::endgroup::
 
@@ -89,10 +89,10 @@ mkdir -p $build_dir || true
 echo Temp directory \"$build_dir\" is created
 
 echo ::group:: Running Sphinx builder
-# Split INPUT_SPHINX_BUILD_OPTIONS into an array to avoid unquoted expansion
 sphinx_build_opts=()
 if [ -n "$INPUT_SPHINX_BUILD_OPTIONS" ]; then
-    IFS=' ' read -ra sphinx_build_opts <<< "$INPUT_SPHINX_BUILD_OPTIONS"
+    while IFS= read -r -d '' t; do sphinx_build_opts+=("$t"); done \
+        < <(printf '%s' "$INPUT_SPHINX_BUILD_OPTIONS" | xargs printf '%s\0')
 fi
 if ! sphinx-build -b html "${sphinx_build_opts[@]}" "$doc_dir" "$build_dir"; then
     echo ::group:: Dumping Sphinx traceback

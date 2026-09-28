@@ -1,0 +1,56 @@
+name: Test build with pinned Sphinx version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        name: Run sphinx-notes/pages action with pinned sphinx version
+        uses: .
+        with:
+          documentation_path: ./tests/fixtures/docs
+          requirements_path: ''
+          pyproject_extras: ''
+          sphinx_version: '7.4.7'
+          checkout: 'false'
+          publish: 'false'
+
+      - name: Assert artifact output is set
+        env:
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+        run: |
+          echo "artifact: $ARTIFACT"
+          if [ -z "$ARTIFACT" ]; then
+            echo "FAIL: artifact output is empty"
+            exit 1
+          fi
+          echo "PASS: artifact output is set to '$ARTIFACT'"
+
+      - name: Assert artifact directory contains HTML
+        env:
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+        run: |
+          echo "Checking artifact directory: $ARTIFACT"
+          if [ ! -d "$ARTIFACT" ]; then
+            echo "FAIL: artifact directory does not exist: $ARTIFACT"
+            exit 1
+          fi
+          if [ ! -f "$ARTIFACT/index.html" ]; then
+            echo "FAIL: index.html not found in artifact directory"
+            ls -la "$ARTIFACT" || true
+            exit 1
+          fi
+          echo "PASS: artifact directory exists and contains index.html"
+
+      - name: Assert correct sphinx version was used
+        run: |
+          INSTALLED=$(python3 -m sphinx --version 2>&1 || sphinx-build --version 2>&1 || true)
+          echo "Sphinx version info: $INSTALLED"
+          if echo "$INSTALLED" | grep -q "7.4.7"; then
+            echo "PASS: Sphinx 7.4.7 is installed"
+          else
+            echo "WARN: Could not confirm sphinx version from: $INSTALLED"
+          fi

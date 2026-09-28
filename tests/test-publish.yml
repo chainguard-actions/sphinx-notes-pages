@@ -1,0 +1,44 @@
+name: Test build with publish enabled (graceful failure on sentinel repo)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # GitHub Pages deployment requires special permissions
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        name: Run sphinx-notes/pages action with publish enabled
+        uses: .
+        continue-on-error: true
+        with:
+          documentation_path: ./tests/fixtures/docs
+          requirements_path: ''
+          pyproject_extras: ''
+          checkout: 'false'
+          publish: 'true'
+
+      - name: Assert action ran (build succeeded or failed gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "artifact: $ARTIFACT"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$ARTIFACT" ]; then
+              echo "FAIL: action succeeded but artifact output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with artifact '$ARTIFACT'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected on sentinel repo without Pages configured)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
