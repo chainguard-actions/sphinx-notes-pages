@@ -25,7 +25,8 @@ echo Installing sphinx via pip
 if [ -z "$INPUT_SPHINX_VERSION" ] ; then
     pip3 install -U sphinx
 else
-    pip3 install -U "sphinx==$INPUT_SPHINX_VERSION"
+    sphinx_pkg=$(printf 'sphinx==%s' "$INPUT_SPHINX_VERSION")
+    pip3 install -U "$sphinx_pkg"
 fi
 
 echo Adding ~/.local/bin to system path
@@ -40,19 +41,20 @@ fi
 echo ::endgroup::
 
 if [ ! -z "$INPUT_REQUIREMENTS_PATH" ] ; then
-    echo "::group:: Installing dependencies declared by $INPUT_REQUIREMENTS_PATH"
+    echo ::group:: Installing dependencies declared by "$INPUT_REQUIREMENTS_PATH"
     if [ -f "$INPUT_REQUIREMENTS_PATH" ]; then
         pip3 install -r "$INPUT_REQUIREMENTS_PATH"
     else
-        echo "No $INPUT_REQUIREMENTS_PATH found, skipped"
+        echo No "$INPUT_REQUIREMENTS_PATH" found, skipped
     fi
     echo ::endgroup::
 fi
 
 if [ ! -z "$INPUT_PYPROJECT_EXTRAS" ] ; then
-    echo "::group:: Installing dependencies declared by pyproject.toml[$INPUT_PYPROJECT_EXTRAS]"
+    echo ::group:: Installing dependencies declared by "pyproject.toml[$INPUT_PYPROJECT_EXTRAS]"
     if [ -f "pyproject.toml" ]; then
-        pip3 install ".[${INPUT_PYPROJECT_EXTRAS}]"
+        pyproject_pkg=$(printf '.[%s]' "$INPUT_PYPROJECT_EXTRAS")
+        pip3 install "$pyproject_pkg"
     else
         echo No pyproject.toml found, skipped
     fi
