@@ -46,7 +46,7 @@ if [ ! -z "$INPUT_REQUIREMENTS_PATH" ] ; then
     if [ -f "$INPUT_REQUIREMENTS_PATH" ]; then
         pip3 install -r "$INPUT_REQUIREMENTS_PATH"
     else
-        echo No $INPUT_REQUIREMENTS_PATH found, skipped
+        echo "No $INPUT_REQUIREMENTS_PATH found, skipped"
     fi
     echo ::endgroup::
 fi
@@ -54,7 +54,7 @@ fi
 if [ ! -z "$INPUT_PYPROJECT_EXTRAS" ] ; then
     echo "::group:: Installing dependencies declared by pyproject.toml[$INPUT_PYPROJECT_EXTRAS]"
     if [ -f "pyproject.toml" ]; then
-        pip3 install ".[$INPUT_PYPROJECT_EXTRAS]"
+        pip3 install ".[${INPUT_PYPROJECT_EXTRAS}]"
     else
         echo No pyproject.toml found, skipped
     fi
@@ -70,8 +70,12 @@ if [ "$INPUT_CACHE" == "true" ]; then
 else
     sphinx_build=sphinx-build
 fi
-read -ra sphinx_build_options <<< "$INPUT_SPHINX_BUILD_OPTIONS"
-if ! $sphinx_build -b html "${sphinx_build_options[@]}" "$doc_dir" "$build_dir"; then
+sphinx_build_opts=()
+if [ -n "$INPUT_SPHINX_BUILD_OPTIONS" ]; then
+    while IFS= read -r -d '' t; do sphinx_build_opts+=("$t"); done \
+        < <(printf '%s' "$INPUT_SPHINX_BUILD_OPTIONS" | xargs printf '%s\0')
+fi
+if ! $sphinx_build -b html "${sphinx_build_opts[@]}" "$doc_dir" "$build_dir"; then
     for l in $(find /tmp -name 'sphinx-err*.log' 2>/dev/null); do
         # Replace "\n" to "%0A" for supporting multiline text in the error message.
         # https://github.com/actions/toolkit/issues/193#issuecomment-605394935

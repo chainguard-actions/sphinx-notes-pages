@@ -16,78 +16,55 @@ Action **sphinx-notes--pages/3.6** was hardened automatically. 3 finding(s) were
 
 ### unpinned-uses (severity: high)
 
-Multiple `uses:` references in action.yml and .github/workflows/pages.yml use mutable version tags instead of pinned 40-character SHA commit digests, making the action vulnerable to supply-chain attacks if any upstream action is compromised or its tag is moved.
-
-Failing references in action.yml:
-- `actions/checkout@v6` (×2, lines 57 and 62)
-- `actions/setup-python@v6` (×2, lines 66 and 72)
-- `actions/cache@v5` (line 78)
-- `sphinx-doc/github-problem-matcher@master` (line 88) — uses a branch name
-- `actions/configure-pages@v6` (line 104)
-- `actions/upload-pages-artifact@v5.0.0` (line 121)
-- `actions/deploy-pages@v5` (line 128)
-
-Failing reference in .github/workflows/pages.yml:
-- `sphinx-notes/pages@v3` (line 22)
+All 'uses:' references in action.yml use mutable tags or version strings instead of pinned 40-character SHA commit digests. This exposes the action to supply-chain attacks if any upstream action is compromised or its tag is moved. Failing references: actions/checkout@v6 (×2), actions/setup-python@v6 (×2), actions/cache@v5, sphinx-doc/github-problem-matcher@master, actions/configure-pages@v6, actions/upload-pages-artifact@v5.0.0, actions/deploy-pages@v5.
 
 Locations:
 
+- `action.yml:53`
 - `action.yml:57`
-- `action.yml:62`
+- `action.yml:61`
 - `action.yml:66`
-- `action.yml:72`
-- `action.yml:78`
-- `action.yml:88`
-- `action.yml:104`
-- `action.yml:121`
-- `action.yml:128`
-- `.github/workflows/pages.yml:22`
+- `action.yml:71`
+- `action.yml:77`
+- `action.yml:84`
+- `action.yml:91`
+- `action.yml:97`
 
 ### script-injection (severity: high)
 
-Two script-injection issues found:
-
-**(a) Direct expression interpolation in run: block** — action.yml line 92 uses `${{ github.action_path }}` directly inside a `run:` shell command string:
-```yaml
-run: ${{ github.action_path }}/main.sh
-```
-Any `${{ ... }}` expression interpolated directly into a `run:` block is a script-injection risk because the value is substituted by the YAML template engine before the shell ever sees it, bypassing shell quoting.
-
-**(b) Unquoted shell variable expansions of workflow-controllable data in main.sh** — Two env vars sourced from `inputs.*` are expanded without double-quoting:
-
-1. Line 28: `pip3 install -U sphinx==$INPUT_SPHINX_VERSION` — `$INPUT_SPHINX_VERSION` (from `inputs.sphinx_version`) is unquoted, allowing shell metacharacter injection.
-
-2. Line 63: `$sphinx_build -b html $INPUT_SPHINX_BUILD_OPTIONS "$doc_dir" "$build_dir"` — `$INPUT_SPHINX_BUILD_OPTIONS` (from `inputs.sphinx_build_options`) is unquoted, allowing an attacker to inject arbitrary additional arguments or shell metacharacters (e.g., `;`, `|`, `$(...)`).
+Sub-rule (a): The 'Build documentation' run: block directly interpolates the GitHub Actions expression ${{ github.action_path }} into the shell command string: `run: ${{ github.action_path }}/main.sh`. Any ${{ ... }} expression inside a run: block is subject to YAML template substitution before the shell processes it, making it a script-injection risk. The value should instead be accessed via the $GITHUB_ACTION_PATH environment variable, which is already available in composite action steps.
 
 Locations:
 
-- `action.yml:92`
-- `main.sh:28`
+- `action.yml:83`
+
+### script-injection (severity: high)
+
+Sub-rule (b): In main.sh, two env vars sourced from user-controlled inputs are expanded unquoted in shell commands, allowing shell metacharacter injection:
+1. `$INPUT_SPHINX_BUILD_OPTIONS` (from inputs.sphinx_build_options) is unquoted in: `if ! $sphinx_build -b html $INPUT_SPHINX_BUILD_OPTIONS "$doc_dir" "$build_dir"` — an attacker can inject arbitrary shell commands via this input.
+2. `$INPUT_SPHINX_VERSION` (from inputs.sphinx_version) is unquoted in: `pip3 install -U sphinx==$INPUT_SPHINX_VERSION` — shell metacharacters in the version string are not quoted.
+Both variables should be double-quoted: "$INPUT_SPHINX_BUILD_OPTIONS" and "$INPUT_SPHINX_VERSION".
+
+Locations:
+
 - `main.sh:63`
-
-### permissions (severity: medium)
-
-The workflow file .github/workflows/pages.yml has no top-level `permissions:` key. While the single job `pages` does define job-level permissions (`pages: write` and `id-token: write`), these are narrowly scoped only to what that job needs. However, the absence of a top-level `permissions: {}` means the default GitHub token permissions (which can be broad, including `contents: write` on some repository configurations) apply to any future jobs added to this workflow that do not explicitly declare their own permissions block. Best practice is to add a top-level `permissions: {}` to deny all permissions by default and grant only what each job needs.
-
-Locations:
-
-- `.github/workflows/pages.yml:1`
+- `main.sh:24`
 
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses, script-injection, permissions
+**Fixes applied:** unpinned-uses, script-injection
 
 **Notes:**
 
-Fixed all three findings:
+Fixed all findings in action.yml and main.sh:
 
-1. **unpinned-uses**: Pinned all 9 unpinned action references to full 40-char SHA digests in action.yml (actions/checkout×2, actions/setup-python×2, actions/cache, sphinx-doc/github-problem-matcher, actions/configure-pages, actions/upload-pages-artifact, actions/deploy-pages) and in .github/workflows/pages.yml (sphinx-notes/pages). Original tags preserved as comments.
+1. unpinned-uses: Pinned all 9 'uses:' references to full 40-char SHA digests with original tags as comments. Used lookup_action_sha to resolve each: actions/checkout@v6→d23441a4, actions/setup-python@v6→ece7cb06, actions/cache@v5→caa29612, sphinx-doc/github-problem-matcher@master→1f74d659, actions/configure-pages@v6→45bfe019, actions/upload-pages-artifact@v5.0.0→fc324d35, actions/deploy-pages@v5→368f8252.
 
-2. **script-injection**: (a) Moved `${{ github.action_path }}` from the `run:` string into the `env:` block as `ACTION_PATH`, with the run command using `"$ACTION_PATH/main.sh"`. (b) Quoted `$INPUT_SPHINX_VERSION` in the pip install command. (c) Used `read -ra sphinx_build_options <<< "$INPUT_SPHINX_BUILD_OPTIONS"` to safely split build options into an array before passing to sphinx-build.
+2. script-injection (a): Replaced `run: ${{ github.action_path }}/main.sh` with `run: "$GITHUB_ACTION_PATH/main.sh"` — uses the pre-set environment variable instead of a YAML-interpolated expression.
 
-3. **permissions**: Added `permissions: {}` top-level block to .github/workflows/pages.yml to deny all permissions by default; job-level permissions (pages: write, id-token: write) remain for the pages job.
+3. script-injection (b): In main.sh, quoted $INPUT_SPHINX_VERSION as "sphinx==$INPUT_SPHINX_VERSION". For $INPUT_SPHINX_BUILD_OPTIONS (a list of flags), used the guarded xargs+read-loop pattern to tokenize into a bash array (sphinx_build_opts) and expanded it as "${sphinx_build_opts[@]}" — preserves argument boundaries and prevents shell metacharacter injection.
 
 ### Iteration 2
 
@@ -95,5 +72,9 @@ Fixed all three findings:
 
 **Notes:**
 
-Fixed all five unquoted shell variable expansions of user-controlled inputs in main.sh: (1) repo_dir assignment now double-quotes $INPUT_REPOSITORY_PATH, (2) doc_dir assignment now double-quotes $INPUT_DOCUMENTATION_PATH, (3) echo for requirements group now double-quotes the entire string including $INPUT_REQUIREMENTS_PATH, (4) echo for pyproject group now double-quotes the entire string including $INPUT_PYPROJECT_EXTRAS, (5) most critically, `pip3 install .[$INPUT_PYPROJECT_EXTRAS]` is now `pip3 install ".[$INPUT_PYPROJECT_EXTRAS]"` preventing shell metacharacter injection via the pyproject_extras input.
+Fixed all unquoted shell variable expansions of user-controlled inputs in main.sh:
+1. Lines 8-9: Quoted `$INPUT_REPOSITORY_PATH` and `$INPUT_DOCUMENTATION_PATH` in variable assignments to prevent word splitting.
+2. Lines 42, 45: Quoted `$INPUT_REQUIREMENTS_PATH` in echo statements.
+3. Line 50: Quoted `$INPUT_PYPROJECT_EXTRAS` in echo statement.
+4. Line 52 (critical): Changed `pip3 install .[$INPUT_PYPROJECT_EXTRAS]` to `pip3 install ".[${INPUT_PYPROJECT_EXTRAS}]"` — the unquoted form allowed injection of shell metacharacters (`;`, `|`, `$(...)`) into the pip3 command. The entire argument is now double-quoted so the shell treats it as a single string, preventing command injection.
 
