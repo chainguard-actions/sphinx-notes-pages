@@ -70,12 +70,12 @@ runs:
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     - name: Checkout
-      uses: chainguard-actions/actions-checkout@e1368932d13643da5fed78161a48f551a5e39389 # v6
+      uses: chainguard-actions/actions-checkout@40e53bf063d4f87f0a6e0a83231c09bcfb22bc19 # v6
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'true' }}
       with:
         fetch-depth: 0 # Required by sphinxnotes-incrbuild
     - name: Checkout
-      uses: chainguard-actions/actions-checkout@e1368932d13643da5fed78161a48f551a5e39389 # v6
+      uses: chainguard-actions/actions-checkout@40e53bf063d4f87f0a6e0a83231c09bcfb22bc19 # v6
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'false' }}
     - name: Setup python
       uses: chainguard-actions/actions-setup-python@6e055a15c9b620aae4c8d0a8b85a69f93f1cce70 # v6
