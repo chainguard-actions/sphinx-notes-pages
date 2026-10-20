@@ -1,0 +1,40 @@
+name: Test basic build without publish
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          documentation_path: tests/fixtures/docs
+          requirements_path: tests/fixtures/requirements.txt
+          checkout: 'false'
+          publish: 'false'
+      - name: Assert artifact output and built HTML
+        env:
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+          PAGE_URL: ${{ steps.action.outputs.page_url }}
+        run: |
+          echo "artifact: $ARTIFACT"
+          echo "page_url: $PAGE_URL"
+          if [ "$ARTIFACT" != "/tmp/sphinxnotes-pages" ]; then
+            echo "FAIL: expected artifact '/tmp/sphinxnotes-pages'"
+            exit 1
+          fi
+          if [ ! -f "$ARTIFACT/index.html" ]; then
+            echo "FAIL: index.html not found"
+            ls -la "$ARTIFACT" || true
+            exit 1
+          fi
+          if ! grep -q "HARNESS_MARKER_TEXT" "$ARTIFACT/index.html"; then
+            echo "FAIL: marker text missing from index.html"
+            exit 1
+          fi
+          if [ -n "$PAGE_URL" ]; then
+            echo "FAIL: page_url should be empty when publish is false"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,37 @@
+name: Test sphinx_build_options and pinned sphinx_version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          documentation_path: tests/fixtures/docs
+          requirements_path: ''
+          sphinx_version: '7.4.7'
+          sphinx_build_options: '-D project=OverriddenProjectName'
+          checkout: 'false'
+          publish: 'false'
+      - name: Assert build options and version were applied
+        env:
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+        run: |
+          echo "artifact: $ARTIFACT"
+          if [ ! -f "$ARTIFACT/index.html" ]; then
+            echo "FAIL: index.html not found"
+            exit 1
+          fi
+          if ! grep -q "OverriddenProjectName" "$ARTIFACT/index.html"; then
+            echo "FAIL: -D project override not reflected in output"
+            exit 1
+          fi
+          VERSION="$(python3 -c 'import sphinx; print(sphinx.__version__)')"
+          echo "sphinx version: $VERSION"
+          if [ "$VERSION" != "7.4.7" ]; then
+            echo "FAIL: expected sphinx 7.4.7"
+            exit 1
+          fi
+          echo "PASS"

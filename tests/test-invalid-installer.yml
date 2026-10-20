@@ -1,0 +1,32 @@
+name: Test invalid pypi_installer fails
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          documentation_path: tests/fixtures/docs
+          pypi_installer: 'conda'
+          checkout: 'false'
+          publish: 'false'
+      - name: Assert action failed
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ARTIFACT: ${{ steps.action.outputs.artifact }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "artifact: $ARTIFACT"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected failure for unknown installer"
+            exit 1
+          fi
+          if [ -n "$ARTIFACT" ]; then
+            echo "FAIL: artifact should be empty on failure"
+            exit 1
+          fi
+          echo "PASS"
