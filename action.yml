@@ -79,16 +79,16 @@ runs:
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     - name: Checkout
-      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      uses: chainguard-actions/actions-checkout@40e53bf063d4f87f0a6e0a83231c09bcfb22bc19 # v6
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'true' }}
       with:
         fetch-depth: 0 # Required by sphinxnotes-incrbuild
     - name: Checkout
-      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      uses: chainguard-actions/actions-checkout@40e53bf063d4f87f0a6e0a83231c09bcfb22bc19 # v6
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'false' }}
 
     - name: Setup python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      uses: chainguard-actions/actions-setup-python@6e055a15c9b620aae4c8d0a8b85a69f93f1cce70 # v6
       with:
         python-version: ${{ inputs.python_version }}
         # Empty string disables caching; pip cache is pointless on the uv path
@@ -96,13 +96,13 @@ runs:
 
     - name: Setup uv
       # setup-uv only publishes exact version tags, no major tags like v10
-      uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      uses: chainguard-actions/astral-sh-setup-uv@48c9e7eafd88fd70e15dae5267447839446f9a6d # v10.3.0
       if: ${{ inputs.pypi_installer == 'uv' }}
       with:
         enable-cache: ${{ inputs.cache }}
 
     - name: Restore cache
-      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+      uses: chainguard-actions/actions-cache@dc4b8a9beaba8dd7fead89b3b3df02fb4bc6336a # v5
       if: ${{ inputs.cache == 'true' }}
       with:
         path: /tmp/sphinxnotes-incrbuild
@@ -112,7 +112,7 @@ runs:
           sphinxnotes-pages-${{ runner.os }}
 
     - name: Enable github problem matcher
-      uses: sphinx-doc/github-problem-matcher@1f74d6599f4a5e89a20d3c99aab4e6a70f7bda0f # master
+      uses: chainguard-actions/sphinx-doc-github-problem-matcher@e252916fed89bf69b37af8eac31ae1684857eea1 # master
 
     - id: build
       name: Build documentation
@@ -130,7 +130,7 @@ runs:
         INPUT_SPHINX_BUILD_OPTIONS: ${{ inputs.sphinx_build_options }}
 
     - name: Setup Pages
-      uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+      uses: chainguard-actions/actions-configure-pages@5e30f03ebf13033a78c13f18bc44b4c86dff369b # v6
       if: ${{ inputs.publish == 'true' }}
 
     - name: Fix file permissions
@@ -147,12 +147,12 @@ runs:
 
     - name: Upload artifact
       # https://github.com/actions/upload-pages-artifact/issues/142
-      uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+      uses: chainguard-actions/actions-upload-pages-artifact@4dfa6faacb82e5ca49dbb6c3759168095c15ac59 # v5.0.0
       if: ${{ inputs.publish == 'true' }}
       with:
         path: ${{ steps.build.outputs.artifact }}
       
     - id: deployment
       name: Deploy to GitHub Pages
-      uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+      uses: chainguard-actions/actions-deploy-pages@bae245d011568dbd8c4e5b60aa51db45dcd46267 # v5
       if: ${{ inputs.publish == 'true' }}
