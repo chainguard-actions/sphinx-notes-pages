@@ -6,11 +6,11 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| 3.4 | [`3.4`](https://github.com/chainguard-actions/sphinx-notes-pages/tree/3.4) | [`16601c3`](https://github.com/sphinx-notes/pages/commit/16601c3551fb1aff4d3f9cbffe7f8c86e123c917) |
-| 3.6 | [`3.6`](https://github.com/chainguard-actions/sphinx-notes-pages/tree/3.6) | [`6e3e010`](https://github.com/sphinx-notes/pages/commit/6e3e0108e79636a0908b1c2c5899e0d3dfad0bc1) |
-| 3.7 | [`3.7`](https://github.com/chainguard-actions/sphinx-notes-pages/tree/3.7) | [`3b962c1`](https://github.com/sphinx-notes/pages/commit/3b962c125b2db7b1f5194d949873fa46d6101d0f) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| 3.4 | [`3.4`](https://github.com/chainguard-actions/sphinx-notes-pages/tree/3.4) | [`16601c3`](https://github.com/sphinx-notes/pages/commit/16601c3551fb1aff4d3f9cbffe7f8c86e123c917) | [`HARDENING.md`](https://github.com/chainguard-actions/sphinx-notes-pages/blob/3.4/HARDENING.md) |
+| 3.6 | [`3.6`](https://github.com/chainguard-actions/sphinx-notes-pages/tree/3.6) | [`6e3e010`](https://github.com/sphinx-notes/pages/commit/6e3e0108e79636a0908b1c2c5899e0d3dfad0bc1) | [`HARDENING.md`](https://github.com/chainguard-actions/sphinx-notes-pages/blob/3.6/HARDENING.md) |
+| 3.7 | [`3.7`](https://github.com/chainguard-actions/sphinx-notes-pages/tree/3.7) | [`3b962c1`](https://github.com/sphinx-notes/pages/commit/3b962c125b2db7b1f5194d949873fa46d6101d0f) | [`HARDENING.md`](https://github.com/chainguard-actions/sphinx-notes-pages/blob/3.7/HARDENING.md) |
 
 ## Privacy
 
