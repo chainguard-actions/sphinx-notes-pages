@@ -89,7 +89,7 @@ runs:
       with:
         python-version: ${{ inputs.python_version }}
     - name: Restore cache
-      uses: chainguard-actions/actions-cache@dc4b8a9beaba8dd7fead89b3b3df02fb4bc6336a # v5
+      uses: chainguard-actions/actions-cache@2d1e8143d682aedf4ca5ea1721581d0ce7952a98 # v5
       if: ${{ inputs.cache == 'true' }}
       with:
         path: /tmp/sphinxnotes-incrbuild
