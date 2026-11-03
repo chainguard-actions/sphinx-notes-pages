@@ -88,7 +88,7 @@ runs:
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'false' }}
 
     - name: Setup python
-      uses: chainguard-actions/actions-setup-python@6e055a15c9b620aae4c8d0a8b85a69f93f1cce70 # v6
+      uses: chainguard-actions/actions-setup-python@64d43abab37098f001c33499cf9c74a158ff0cfc # v6
       with:
         python-version: ${{ inputs.python_version }}
         # Empty string disables caching; pip cache is pointless on the uv path
