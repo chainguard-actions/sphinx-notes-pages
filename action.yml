@@ -154,5 +154,5 @@ runs:
       
     - id: deployment
       name: Deploy to GitHub Pages
-      uses: chainguard-actions/actions-deploy-pages@bae245d011568dbd8c4e5b60aa51db45dcd46267 # v5
+      uses: chainguard-actions/actions-deploy-pages@678ac247f820a22b0533c8f2fe9d721728098fdf # v5
       if: ${{ inputs.publish == 'true' }}
