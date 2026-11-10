@@ -147,7 +147,7 @@ runs:
 
     - name: Upload artifact
       # https://github.com/actions/upload-pages-artifact/issues/142
-      uses: chainguard-actions/actions-upload-pages-artifact@4dfa6faacb82e5ca49dbb6c3759168095c15ac59 # v5.0.0
+      uses: chainguard-actions/actions-upload-pages-artifact@811cbfd0802bd690fb1034dd93e02521e40e3e7b # v5.0.0
       if: ${{ inputs.publish == 'true' }}
       with:
         path: ${{ steps.build.outputs.artifact }}
