@@ -130,7 +130,7 @@ runs:
         INPUT_SPHINX_BUILD_OPTIONS: ${{ inputs.sphinx_build_options }}
 
     - name: Setup Pages
-      uses: chainguard-actions/actions-configure-pages@5e30f03ebf13033a78c13f18bc44b4c86dff369b # v6
+      uses: chainguard-actions/actions-configure-pages@df607c51ac1f8c869cc9acfc5768950f537e72b7 # v6
       if: ${{ inputs.publish == 'true' }}
 
     - name: Fix file permissions
