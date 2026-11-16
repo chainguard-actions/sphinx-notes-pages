@@ -10,10 +10,10 @@ doc_dir=$repo_dir/$INPUT_DOCUMENTATION_PATH
 # https://stackoverflow.com/a/4774063/4799273
 action_dir=$GITHUB_ACTION_PATH
 
-echo Action: $action_dir
-echo Workspace: $GITHUB_WORKSPACE
-echo Repository: $repo_dir
-echo Documentation: $doc_dir
+echo "Action: $action_dir"
+echo "Workspace: $GITHUB_WORKSPACE"
+echo "Repository: $repo_dir"
+echo "Documentation: $doc_dir"
 
 echo ::endgroup::
 
@@ -38,11 +38,11 @@ pkg_install() {
 # so we have to try various package manager.
 echo ::group:: Installing Sphinx
 
-echo Installing sphinx via $INPUT_PYPI_INSTALLER
+echo "Installing sphinx via $INPUT_PYPI_INSTALLER"
 if [ -z "$INPUT_SPHINX_VERSION" ] ; then
     pkg_install -U sphinx
 else
-    pkg_install -U sphinx==$INPUT_SPHINX_VERSION
+    pkg_install -U "sphinx==$INPUT_SPHINX_VERSION"
 fi
 
 echo Adding ~/.local/bin to system path
@@ -59,19 +59,19 @@ pkg_install -U 'sphinxnotes-incrbuild>=1.0'
 echo ::endgroup::
 
 if [ ! -z "$INPUT_REQUIREMENTS_PATH" ] ; then
-    echo ::group:: Installing dependencies declared by $INPUT_REQUIREMENTS_PATH
+    echo "::group:: Installing dependencies declared by $INPUT_REQUIREMENTS_PATH"
     if [ -f "$INPUT_REQUIREMENTS_PATH" ]; then
         pkg_install -r "$INPUT_REQUIREMENTS_PATH"
     else
-        echo No $INPUT_REQUIREMENTS_PATH found, skipped
+        echo "No $INPUT_REQUIREMENTS_PATH found, skipped"
     fi
     echo ::endgroup::
 fi
 
 if [ ! -z "$INPUT_PYPROJECT_EXTRAS" ] ; then
-    echo ::group:: Installing dependencies declared by pyproject.toml[$INPUT_PYPROJECT_EXTRAS]
+    echo "::group:: Installing dependencies declared by pyproject.toml[$INPUT_PYPROJECT_EXTRAS]"
     if [ -f "pyproject.toml" ]; then
-        pkg_install .[$INPUT_PYPROJECT_EXTRAS]
+        pkg_install ".[$INPUT_PYPROJECT_EXTRAS]"
     else
         echo No pyproject.toml found, skipped
     fi
@@ -79,7 +79,7 @@ if [ ! -z "$INPUT_PYPROJECT_EXTRAS" ] ; then
 fi
 
 if [ ! -z "$INPUT_PYPROJECT_GROUP" ] ; then
-    echo ::group:: Installing dependency group declared by pyproject.toml[$INPUT_PYPROJECT_GROUP]
+    echo "::group:: Installing dependency group declared by pyproject.toml[$INPUT_PYPROJECT_GROUP]"
     if [ -f "pyproject.toml" ]; then
         if [ "$INPUT_PYPI_INSTALLER" == "pip" ]; then
             pip3 install -U 'pip>=25.1'  # --group requires pip 25.1+
@@ -100,7 +100,9 @@ if [ "$INPUT_CACHE" == "true" ]; then
 else
     sphinx_build=sphinx-build
 fi
-if ! $sphinx_build -b html $INPUT_SPHINX_BUILD_OPTIONS "$doc_dir" "$build_dir"; then
+# shellcheck disable=SC2206
+sphinx_build_options=($INPUT_SPHINX_BUILD_OPTIONS)   # same split and glob as upstream's unquoted expansion
+if ! "$sphinx_build" -b html "${sphinx_build_options[@]}" "$doc_dir" "$build_dir"; then
     for l in $(find /tmp -name 'sphinx-err*.log' 2>/dev/null); do
         # Replace "\n" to "%0A" for supporting multiline text in the error message.
         # https://github.com/actions/toolkit/issues/193#issuecomment-605394935
@@ -112,4 +114,4 @@ if ! $sphinx_build -b html $INPUT_SPHINX_BUILD_OPTIONS "$doc_dir" "$build_dir"; 
 fi
 echo ::endgroup::
 
-echo "artifact=$build_dir" >> $GITHUB_OUTPUT
+echo "artifact=$build_dir" >> "$GITHUB_OUTPUT"
