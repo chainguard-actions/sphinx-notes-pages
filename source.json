@@ -4,9 +4,8 @@
   "version": "3.6",
   "commit_sha": "6e3e0108e79636a0908b1c2c5899e0d3dfad0bc1",
   "url": "https://github.com/sphinx-notes/pages",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2",
-  "dependency_fingerprint": "sha256:1c20343e94f70ff92a688cf976f632f214e6d5942cf8ed2dbf1e0d3baed625fa"
+  "harden_agent_version": "2"
 }

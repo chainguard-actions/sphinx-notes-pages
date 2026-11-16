@@ -49,6 +49,7 @@ outputs:
   artifact:
     description: 'Directory where artifact (HTML documentation) is stored, user can use it to deploy GitHub Pages manually'
     value: ${{ steps.build.outputs.artifact }}
+
 runs:
   using: "composite"
   steps:
@@ -77,6 +78,7 @@ runs:
     - name: Checkout
       uses: chainguard-actions/actions-checkout@40e53bf063d4f87f0a6e0a83231c09bcfb22bc19 # v6
       if: ${{ inputs.checkout == 'true' && inputs.cache == 'false' }}
+
     - name: Setup python
       uses: chainguard-actions/actions-setup-python@6e055a15c9b620aae4c8d0a8b85a69f93f1cce70 # v6
       if: ${{ inputs.cache == 'true' }}
@@ -88,6 +90,7 @@ runs:
       if: ${{ inputs.cache == 'false' }}
       with:
         python-version: ${{ inputs.python_version }}
+
     - name: Restore cache
       uses: chainguard-actions/actions-cache@2d1e8143d682aedf4ca5ea1721581d0ce7952a98 # v5
       if: ${{ inputs.cache == 'true' }}
@@ -97,11 +100,13 @@ runs:
         key: sphinxnotes-pages-${{ runner.os }}-${{ github.run_id }}
         restore-keys: |
           sphinxnotes-pages-${{ runner.os }}
+
     - name: Enable github problem matcher
       uses: chainguard-actions/sphinx-doc-github-problem-matcher@e252916fed89bf69b37af8eac31ae1684857eea1 # master
+
     - id: build
       name: Build documentation
-      run: "$GITHUB_ACTION_PATH/main.sh"
+      run: "\"$GITHUB_ACTION_PATH/main.sh\""
       shell: bash
       env:
         # See https://github.com/actions/runner/issues/665
@@ -111,9 +116,11 @@ runs:
         INPUT_SPHINX_VERSION: ${{ inputs.sphinx_version }}
         INPUT_CACHE: ${{ inputs.cache }}
         INPUT_SPHINX_BUILD_OPTIONS: ${{ inputs.sphinx_build_options }}
+
     - name: Setup Pages
       uses: chainguard-actions/actions-configure-pages@5e30f03ebf13033a78c13f18bc44b4c86dff369b # v6
       if: ${{ inputs.publish == 'true' }}
+
     - name: Fix file permissions
       shell: sh
       if: runner.os == 'Linux'
@@ -125,12 +132,14 @@ runs:
         done
       env:
         INPUT_PATH: ${{ steps.build.outputs.artifact }}
+
     - name: Upload artifact
       # https://github.com/actions/upload-pages-artifact/issues/142
       uses: chainguard-actions/actions-upload-pages-artifact@4dfa6faacb82e5ca49dbb6c3759168095c15ac59 # v5.0.0
       if: ${{ inputs.publish == 'true' }}
       with:
         path: ${{ steps.build.outputs.artifact }}
+      
     - id: deployment
       name: Deploy to GitHub Pages
       uses: chainguard-actions/actions-deploy-pages@bae245d011568dbd8c4e5b60aa51db45dcd46267 # v5

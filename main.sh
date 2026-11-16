@@ -8,12 +8,12 @@ echo ::group:: Initialize various paths
 repo_dir="$GITHUB_WORKSPACE/$INPUT_REPOSITORY_PATH"
 doc_dir="$repo_dir/$INPUT_DOCUMENTATION_PATH"
 # https://stackoverflow.com/a/4774063/4799273
-action_dir=$GITHUB_ACTION_PATH
+action_dir="$GITHUB_ACTION_PATH"
 
-echo Action: $action_dir
-echo Workspace: $GITHUB_WORKSPACE
-echo Repository: $repo_dir
-echo Documentation: $doc_dir
+echo "Action: $action_dir"
+echo "Workspace: $GITHUB_WORKSPACE"
+echo "Repository: $repo_dir"
+echo "Documentation: $doc_dir"
 
 echo ::endgroup::
 
@@ -63,23 +63,22 @@ fi
 
 echo ::group:: Running Sphinx builder
 build_dir=/tmp/sphinxnotes-pages
-mkdir -p $build_dir || true
-echo Temp directory \"$build_dir\" is created
+mkdir -p "$build_dir" || true
+echo "Temp directory \"$build_dir\" is created"
 if [ "$INPUT_CACHE" == "true" ]; then
     sphinx_build=sphinxnotes-incrbuild
 else
     sphinx_build=sphinx-build
 fi
-sphinx_build_opts=()
-if [ -n "$INPUT_SPHINX_BUILD_OPTIONS" ]; then
-    while IFS= read -r -d '' t; do sphinx_build_opts+=("$t"); done \
-        < <(printf '%s' "$INPUT_SPHINX_BUILD_OPTIONS" | xargs printf '%s\0')
-fi
-if ! $sphinx_build -b html "${sphinx_build_opts[@]}" "$doc_dir" "$build_dir"; then
+# INPUT_SPHINX_BUILD_OPTIONS is a whitespace-separated option list; split it
+# into an array exactly like upstream's unquoted expansion (no evaluation).
+# shellcheck disable=SC2086,SC2206
+sphinx_build_opts=($INPUT_SPHINX_BUILD_OPTIONS)
+if ! "$sphinx_build" -b html "${sphinx_build_opts[@]}" "$doc_dir" "$build_dir"; then
     for l in $(find /tmp -name 'sphinx-err*.log' 2>/dev/null); do
         # Replace "\n" to "%0A" for supporting multiline text in the error message.
         # https://github.com/actions/toolkit/issues/193#issuecomment-605394935
-        traceback=$(tail -n500 $l | awk '{ printf "%s%%0A", $0 }')
+        traceback=$(tail -n500 "$l" | awk '{ printf "%s%%0A", $0 }')
         echo "::error title=Sphinx traceback::$traceback"
     done
     echo ::endgroup::
@@ -87,4 +86,4 @@ if ! $sphinx_build -b html "${sphinx_build_opts[@]}" "$doc_dir" "$build_dir"; th
 fi
 echo ::endgroup::
 
-echo "artifact=$build_dir" >> $GITHUB_OUTPUT
+echo "artifact=$build_dir" >> "$GITHUB_OUTPUT"
